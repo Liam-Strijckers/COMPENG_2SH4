@@ -1,0 +1,17 @@
+public class Student
+{
+    public static void main(String[] args){
+        public string name; 
+        public string DOB;
+        public int year_in_school;
+        public string Courses[] courses;
+    }
+
+    public class Courses{
+        public string coursenName;
+        public string courseCode;
+        public string instructor;
+        public string semOffered;
+        public int cap;
+    }
+}

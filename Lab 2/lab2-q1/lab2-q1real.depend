@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1570135184 source:d:\2sh4 learning\lab 2\lab2-q1real\main.c
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+

@@ -1,0 +1,158 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct student{
+    int ID;
+    char firstName[15];
+    char lastName[15];
+    int grade1;
+    int grade2;
+    float gradeF;
+}student;
+
+student **create_class_list(char *filename, int *sizePtr);
+int find(int idNo, student **list, int size);
+void input_grades(char *filename, student **list, int size);
+void compute_final_course_grades(student **list, int size);
+void output_final_course_grades(char *filename, student **list, int size);
+void print_list(student **list, int size);
+void withdraw(int idNo, student **list, int *sizePtr);
+void destroy_list(student **list, int *sizePtr);
+
+int main(){
+    char studentListFile[30];//variable names for the user inputs
+    char studentGradesListFile[30];
+    char studentGradesOutputFile[30];
+    student **list = NULL;//sets the student list to be nothing
+    int size, studID;
+    printf("Enter the filename containing the students name's: ");//asks for user input for the file with the student names and numbers
+    scanf("%s", studentListFile);
+    list = create_class_list(studentListFile, &size);//creates list of students in the class
+    int f=find(9000, list, size);
+    printf("%d\n",f);
+    printf("Enter the filename containing the students grade's: ");//asks for user input for the student's grades
+    scanf("%s", studentGradesListFile);
+    input_grades(studentGradesListFile, list, size);//assigns grades to each student
+    compute_final_course_grades(list, size);//computes the final grades for each student
+    printf("Enter the filename to output the student's final grades to:");//ask user to enter a file to put the grades in
+    scanf("%s", studentGradesOutputFile);
+    printf("\n");
+    output_final_course_grades(studentGradesOutputFile, list, size);//outputs the students final grades
+    printf("The Students and their grades are: \n");
+    print_list(list, size);//prints the class information with their grades
+    while (1){//prompt for the withdraw function
+        printf("Enter the student ID of the student which you would like to withdraw from the list(to exit enter -1): ");
+        scanf("%d", &studID);
+        if (-1== studID){//checks to see if the user entered a negative and ends/breaks the loop if they did
+            break;
+        }
+        withdraw(studID, list, &size);//withdraws student
+        print_list(list, size);//reprints the class list without the withdrawn student
+    }
+    destroy_list(list, &size);
+}
+
+student **create_class_list(char *filename, int *sizePtr){
+    FILE *filePoint = fopen(filename, "r");//opens the inputed file to be read
+    int numOfStud; //number of stduents
+    student **stud;//pointer stud for students
+    if (filePoint == NULL){//if the file is not able to be found
+        printf("Error: Could not open the file %s\n", filename);
+        exit(1);
+    }
+    fscanf(filePoint, "%d", &numOfStud);//get the number of students from the file
+    *sizePtr = numOfStud;//pointer for the number of students
+    stud = (student **)malloc(numOfStud * (sizeof(student *)));//allocates memory for the size of students
+    for (int i = 0; i < numOfStud; i++){
+        stud[i] = (student *)malloc(sizeof(student));
+        fscanf(filePoint, "%d %s %s", &stud[i]->ID, stud[i]->firstName, stud[i]->lastName);//gets each students student ID and name
+        stud[i]->grade1 = 0;//initializes all grades to 0
+        stud[i]->grade2 = 0;
+        stud[i]->gradeF = 0;
+    }
+    fclose(filePoint);
+    return stud;
+}
+
+int find(int idNo, student **list, int size){
+    for (int i = 0; i < size; i++){//checks to see if any student in the file matches the input student ID
+        if (list[i]->ID == idNo){
+            return i;//returns the student number if it was found
+        }
+    }
+    return -1;//returns -1 if it was not found
+}
+
+void input_grades(char *filename, student **list, int size){
+    FILE *filePoint = fopen(filename, "r");//opens the inputed file for reading
+    int i, grade_1, grade_2, studID;
+    if (filePoint == NULL){//if the file equals null then the file couldn't be found
+        printf("Error: Couldn't open the inputed file %s\n", filename);
+        exit(1);
+    }
+    while (fscanf(filePoint, "%d", &studID) == 1){//scans and checks to see if the student ID matches
+        i = find(studID, list, size);//finds the student from the list using the student ID given
+        fscanf(filePoint, "%d %d", &grade_1, &grade_2);//scans and assigns grade 1 and 2 values
+        if (i != -1){//if the student was found in the function (not -1 value) then assigns the grades to the students
+            list[i]->grade1 = grade_1;
+            list[i]->grade2 = grade_2;
+        }
+    }
+    fclose(filePoint);
+}
+
+void compute_final_course_grades(student **list, int size){
+    for (int i = 0; i < size; i++){//the list[i] is going through each student in the list
+        int temp = (list[i]->grade1 + list[i]->grade2) / 2.0;//assigns and calculates the students final grade based off their grade 1 and grade 2
+        list[i]->gradeF = temp;
+    }
+}
+
+void output_final_course_grades(char *filename, student **list, int size){
+    FILE *filePoint = fopen(filename, "w");//opens the file for writing
+    if (filePoint == NULL){//if the inputed file can't be found
+        printf("Error: Couldn't open file %s\n", filename);
+        return;
+    }
+    fprintf(filePoint, "%d \n", size);//prints the number of students in the output text file
+    for (int i = 0; i < size; i++){//writes the student ID and the final grade in the output text file
+        fprintf(filePoint, "%d %.4f\n", list[i]->ID, list[i]->gradeF);
+    }
+    fclose(filePoint);
+}
+
+void print_list(student **list, int size){
+    for (int i = 0; i < size; i++){//prints all the students information
+        printf("Student ID:%d\nStudent Name: %s %s\nProject 1 Grade: %d\nProject 2 Grade: %d\nFinal Grade: %.4f\n", list[i]->ID, list[i]->firstName, list[i]->lastName, list[i]->grade1, list[i]->grade2, list[i]->gradeF);
+        printf("\n");
+    }
+}
+
+void withdraw(int idNo, student **list, int *sizePtr){
+    int i=0;
+    int check = 0;//sets check to be false
+    for (i = 0; i < *sizePtr; i++){
+        if (list[i]->ID == idNo){//checks the input student ID matches the student ID in the list
+            check = 1;//set check to be true
+            break;
+        }
+    }
+    if (check){//checks to be that the input student ID matched the student ID in the list based on the above
+        free(list[i]);//frees the found above
+        for (i = i + 1; i < *sizePtr; i++){//changes the paramter so that the list is one smaller so the list size decreases
+            list[i - 1] = list[i];
+        }
+        (*sizePtr) = (*sizePtr) - 1;//size is one less
+        printf("Student with ID : %d was withdrawn from the class\n", idNo);
+    }
+    else
+        printf("Student with ID : %d was not found\n", idNo);
+}
+
+void destroy_list(student **list, int *sizePtr){
+    for (int i = 0; i < *sizePtr; i++)
+        free(list[i]);//frees every student and then the list and sets the size pointer to zero
+    free(list);
+    *sizePtr = 0;
+}
